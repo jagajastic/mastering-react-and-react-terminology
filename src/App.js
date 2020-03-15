@@ -1,37 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Route } from "react-router-dom";
 // import logo from './logo.svg';
 import "./App.css";
 import ListContacts from "./ListContacts";
-
+import * as ContactAPI from "./utils/ContactsAPI";
+import CreateContact from "./CreateContact";
 
 function App() {
-  const [contacts, setContact] = useState([
-    {
-      id: "ryan",
-      name: "Ryan Florence",
-      email: "ryan@reacttraining.com",
-      avatarUrl: "http://localhost:3000/ryan.jpg"
-    },
-    {
-      id: "michael",
-      name: "Michael Jackson",
-      email: "michael@reacttraining.com",
-      avatarUrl: "http://localhost:3000/michael.jpg"
-    },
-    {
-      id: "tyler",
-      name: "Tyler McGinnis",
-      email: "tyler@reacttraining.com",
-      avatarUrl: "http://localhost:3000/tyler.jpg"
-    }
-  ]);
+  const [contacts, setContacts] = useState([]);
 
-  const removeContact = (contact) => {
-    setContact( () => contacts.filter( c => c.id !== contact.id ));
-  }
+  useEffect(() => {
+    ContactAPI.getAll().then(contacts => {
+      setContacts(contacts);
+    });
+  }, []);
+  const removeContact = contact => {
+    setContacts(() => contacts.filter(c => c.id !== contact.id));
+
+    ContactAPI.remove(contact);
+  };
+
+  const createContact = contact => {
+    ContactAPI.create(contact).then(contact => {
+      setContacts(contact => contacts.concat([contact]));
+    });
+  };
+
   return (
     <div className="App">
-      <ListContacts contacts={contacts} onDeleteContact={removeContact} />
+      <Route
+        exact
+        path="/"
+        render={() => (
+          <ListContacts contacts={contacts} onDeleteContact={removeContact} />
+        )}
+      />
+
+      <Route
+        path="/create"
+        render={history => (
+          <CreateContact
+            onCreateContact={contact => {
+              createContact(contact);
+              history.push("/");
+            }}
+          />
+        )}
+      />
     </div>
   );
 }
